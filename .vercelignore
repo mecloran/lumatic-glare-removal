@@ -1,0 +1,26 @@
+# Large raw data - only test images needed
+raw_examples/
+.gemini-browser-data/
+
+# Development files
+backend/
+frontend/
+node_modules/
+
+# Debug files
+*.log
+*.png
+!public/**/*.png
+!public/**/*.jpg
+
+# Claude Code
+.claude/logs/
+.claude/pids/
+.claude/screenshots/
+
+# Build artifacts
+dist/
+
+# IDE
+.idea/
+.vscode/
