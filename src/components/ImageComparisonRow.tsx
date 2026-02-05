@@ -6,11 +6,9 @@ interface Props {
   showClear: boolean;
 }
 
-interface LightboxState {
-  leftImage: string;
-  rightImage: string;
-  leftLabel: string;
-  rightLabel: string;
+interface ImageOption {
+  label: string;
+  src: string;
 }
 
 type ViewMode = 'side-by-side' | 'overlay';
@@ -34,9 +32,14 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '12px',
     color: '#a0a0a0'
   },
-  grid: {
+  grid4: {
     display: 'grid',
     gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: '12px'
+  },
+  grid3: {
+    display: 'grid',
+    gridTemplateColumns: '2fr 1fr 1fr',
     gap: '12px'
   },
   imageSlot: {
@@ -86,7 +89,8 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
-    padding: '20px'
+    padding: '20px',
+    overflow: 'auto'
   },
   modeToggle: {
     display: 'flex',
@@ -112,9 +116,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   lightboxContainer: {
     display: 'flex',
-    gap: '20px',
+    gap: '16px',
     maxWidth: '95vw',
-    maxHeight: '80vh',
+    maxHeight: '70vh',
     alignItems: 'center',
     justifyContent: 'center'
   },
@@ -123,50 +127,42 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    maxWidth: '45vw'
+    maxWidth: '30vw'
   },
   lightboxImage: {
     maxWidth: '100%',
-    maxHeight: '70vh',
+    maxHeight: '60vh',
     objectFit: 'contain' as const,
     borderRadius: '4px'
   },
   lightboxLabel: {
     color: '#fff',
-    fontSize: '14px',
+    fontSize: '12px',
     fontWeight: 600,
-    marginTop: '12px',
+    marginTop: '8px',
     textTransform: 'uppercase',
-    letterSpacing: '1px'
+    letterSpacing: '1px',
+    textAlign: 'center' as const
   },
   closeHint: {
     color: '#666',
     fontSize: '12px',
-    marginTop: '20px'
+    marginTop: '16px'
   },
   // Overlay comparison styles
   overlayContainer: {
     position: 'relative' as const,
-    maxWidth: '90vw',
-    maxHeight: '75vh',
+    maxWidth: '80vw',
+    maxHeight: '60vh',
     overflow: 'hidden',
     borderRadius: '4px',
     cursor: 'ew-resize'
   },
   overlayImageBase: {
     display: 'block',
-    maxWidth: '90vw',
-    maxHeight: '75vh',
+    maxWidth: '80vw',
+    maxHeight: '60vh',
     objectFit: 'contain' as const,
-    userSelect: 'none' as const
-  },
-  overlayImageTop: {
-    position: 'absolute' as const,
-    top: 0,
-    left: 0,
-    height: '100%',
-    objectFit: 'cover' as const,
-    objectPosition: 'left',
     userSelect: 'none' as const
   },
   sliderLine: {
@@ -206,73 +202,88 @@ const styles: Record<string, React.CSSProperties> = {
     width: '100%',
     marginTop: '12px',
     padding: '0 20px'
+  },
+  selectorContainer: {
+    display: 'flex',
+    gap: '24px',
+    marginTop: '16px',
+    padding: '12px 16px',
+    background: '#222',
+    borderRadius: '8px'
+  },
+  selectorGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px'
+  },
+  selectorLabel: {
+    fontSize: '11px',
+    color: '#888',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
+  },
+  selectorButtons: {
+    display: 'flex',
+    gap: '4px',
+    flexWrap: 'wrap'
+  },
+  selectorButton: {
+    padding: '6px 12px',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '12px',
+    fontWeight: 500,
+    transition: 'all 0.2s'
   }
 };
 
 export function ImageComparisonRow({ imageSet, showClear }: Props) {
-  const [lightbox, setLightbox] = useState<LightboxState | null>(null);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('overlay');
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
+  const [leftImageIndex, setLeftImageIndex] = useState(0);
+  const [rightImageIndex, setRightImageIndex] = useState(1);
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  const handleImageClick = (slotLabel: string, fullSrc: string | null) => {
-    if (!fullSrc) return;
+  // Build available images list
+  const availableImages: ImageOption[] = [];
+  if (showClear && imageSet.images.clear) {
+    availableImages.push({ label: 'Clear (No Glasses)', src: imageSet.images.clear });
+  }
+  if (imageSet.images.glare) {
+    availableImages.push({ label: 'Glare (Original)', src: imageSet.images.glare });
+  }
+  if (imageSet.images.geminiResult) {
+    availableImages.push({ label: 'Gemini Result', src: imageSet.images.geminiResult });
+  }
+  if (imageSet.images.humanEdited) {
+    availableImages.push({ label: 'Human Edited', src: imageSet.images.humanEdited });
+  }
 
-    const { glare, geminiResult, humanEdited } = imageSet.images;
+  const openLightbox = () => {
+    // Set default comparison: glare vs gemini, or first two available
+    const glareIdx = availableImages.findIndex(img => img.label.includes('Glare'));
+    const geminiIdx = availableImages.findIndex(img => img.label.includes('Gemini'));
+    const humanIdx = availableImages.findIndex(img => img.label.includes('Human'));
 
-    if (slotLabel === 'Glare (Original)') {
-      if (geminiResult) {
-        setLightbox({
-          leftImage: fullSrc,
-          rightImage: geminiResult,
-          leftLabel: 'Original (Glare)',
-          rightLabel: 'Gemini Result'
-        });
-      } else {
-        setLightbox({
-          leftImage: fullSrc,
-          rightImage: fullSrc,
-          leftLabel: 'Original (Glare)',
-          rightLabel: ''
-        });
-      }
-    } else if (slotLabel === 'Gemini Result' || slotLabel === 'Human Edited') {
-      if (geminiResult && humanEdited) {
-        setLightbox({
-          leftImage: geminiResult,
-          rightImage: humanEdited,
-          leftLabel: 'Gemini Result',
-          rightLabel: 'Human Edited'
-        });
-      } else if (geminiResult && !humanEdited) {
-        setLightbox({
-          leftImage: glare || fullSrc,
-          rightImage: geminiResult,
-          leftLabel: 'Original (Glare)',
-          rightLabel: 'Gemini Result'
-        });
-      } else if (!geminiResult && humanEdited) {
-        setLightbox({
-          leftImage: glare || fullSrc,
-          rightImage: humanEdited,
-          leftLabel: 'Original (Glare)',
-          rightLabel: 'Human Edited'
-        });
-      }
+    if (glareIdx >= 0 && geminiIdx >= 0) {
+      setLeftImageIndex(glareIdx);
+      setRightImageIndex(geminiIdx);
+    } else if (geminiIdx >= 0 && humanIdx >= 0) {
+      setLeftImageIndex(geminiIdx);
+      setRightImageIndex(humanIdx);
     } else {
-      setLightbox({
-        leftImage: fullSrc,
-        rightImage: fullSrc,
-        leftLabel: slotLabel,
-        rightLabel: ''
-      });
+      setLeftImageIndex(0);
+      setRightImageIndex(Math.min(1, availableImages.length - 1));
     }
     setSliderPosition(50);
+    setIsLightboxOpen(true);
   };
 
   const closeLightbox = () => {
-    setLightbox(null);
+    setIsLightboxOpen(false);
     setIsDragging(false);
   };
 
@@ -311,20 +322,32 @@ export function ImageComparisonRow({ imageSet, showClear }: Props) {
     setIsDragging(false);
   }, []);
 
-  const slots = [
-    { label: 'Clear (No Glasses)', src: showClear ? imageSet.images.clear : null, showPlaceholder: !showClear },
-    { label: 'Glare (Original)', src: imageSet.images.glare },
-    { label: 'Gemini Result', src: imageSet.images.geminiResult },
-    { label: 'Human Edited', src: imageSet.images.humanEdited }
-  ];
+  // Determine grid layout based on whether we have clear image
+  const hasClearImage = showClear && imageSet.images.clear;
+  const gridStyle = hasClearImage ? styles.grid4 : styles.grid3;
 
-  const hasTwoImages = lightbox && lightbox.rightLabel && lightbox.leftImage !== lightbox.rightImage;
+  // Build slots for grid display
+  const gridSlots = hasClearImage
+    ? [
+        { label: 'Clear (No Glasses)', src: imageSet.images.clear },
+        { label: 'Glare (Original)', src: imageSet.images.glare },
+        { label: 'Gemini Result', src: imageSet.images.geminiResult },
+        { label: 'Human Edited', src: imageSet.images.humanEdited }
+      ]
+    : [
+        { label: 'Glare (Original)', src: imageSet.images.glare },
+        { label: 'Gemini Result', src: imageSet.images.geminiResult },
+        { label: 'Human Edited', src: imageSet.images.humanEdited }
+      ];
+
+  const leftImage = availableImages[leftImageIndex];
+  const rightImage = availableImages[rightImageIndex];
 
   return (
     <div style={styles.container}>
       <div style={styles.header}>{imageSet.name} ({imageSet.id})</div>
-      <div style={styles.grid}>
-        {slots.map((slot, i) => (
+      <div style={gridStyle}>
+        {gridSlots.map((slot, i) => (
           <div key={i} style={styles.imageSlot}>
             <div style={styles.label}>{slot.label}</div>
             <div style={styles.imageContainer}>
@@ -334,19 +357,17 @@ export function ImageComparisonRow({ imageSet, showClear }: Props) {
                   alt={slot.label}
                   style={styles.image}
                   loading="lazy"
-                  onClick={() => handleImageClick(slot.label, slot.src)}
+                  onClick={openLightbox}
                 />
               ) : (
-                <div style={styles.placeholder}>
-                  {slot.showPlaceholder ? 'N/A' : 'Not available'}
-                </div>
+                <div style={styles.placeholder}>Not available</div>
               )}
             </div>
           </div>
         ))}
       </div>
 
-      {lightbox && (
+      {isLightboxOpen && availableImages.length >= 2 && (
         <div
           style={styles.modal}
           onClick={closeLightbox}
@@ -356,39 +377,46 @@ export function ImageComparisonRow({ imageSet, showClear }: Props) {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          {hasTwoImages && (
-            <div style={styles.modeToggle} onClick={(e) => e.stopPropagation()}>
-              <button
-                style={{
-                  ...styles.modeButton,
-                  ...(viewMode === 'side-by-side' ? styles.modeButtonActive : styles.modeButtonInactive)
-                }}
-                onClick={() => setViewMode('side-by-side')}
-              >
-                Side by Side
-              </button>
-              <button
-                style={{
-                  ...styles.modeButton,
-                  ...(viewMode === 'overlay' ? styles.modeButtonActive : styles.modeButtonInactive)
-                }}
-                onClick={() => setViewMode('overlay')}
-              >
-                Overlay Slider
-              </button>
-            </div>
-          )}
+          <div style={styles.modeToggle} onClick={(e) => e.stopPropagation()}>
+            <button
+              style={{
+                ...styles.modeButton,
+                ...(viewMode === 'side-by-side' ? styles.modeButtonActive : styles.modeButtonInactive)
+              }}
+              onClick={() => setViewMode('side-by-side')}
+            >
+              Side by Side (3)
+            </button>
+            <button
+              style={{
+                ...styles.modeButton,
+                ...(viewMode === 'overlay' ? styles.modeButtonActive : styles.modeButtonInactive)
+              }}
+              onClick={() => setViewMode('overlay')}
+            >
+              Overlay Slider
+            </button>
+          </div>
 
-          {viewMode === 'side-by-side' || !hasTwoImages ? (
+          {viewMode === 'side-by-side' ? (
             <div style={styles.lightboxContainer} onClick={(e) => e.stopPropagation()}>
-              <div style={styles.lightboxImageWrapper}>
-                <img src={lightbox.leftImage} alt={lightbox.leftLabel} style={styles.lightboxImage} />
-                <div style={styles.lightboxLabel}>{lightbox.leftLabel}</div>
-              </div>
-              {hasTwoImages && (
+              {/* Show 3 images: Glare, Gemini, Human */}
+              {imageSet.images.glare && (
                 <div style={styles.lightboxImageWrapper}>
-                  <img src={lightbox.rightImage} alt={lightbox.rightLabel} style={styles.lightboxImage} />
-                  <div style={styles.lightboxLabel}>{lightbox.rightLabel}</div>
+                  <img src={imageSet.images.glare} alt="Glare" style={styles.lightboxImage} />
+                  <div style={styles.lightboxLabel}>Glare (Original)</div>
+                </div>
+              )}
+              {imageSet.images.geminiResult && (
+                <div style={styles.lightboxImageWrapper}>
+                  <img src={imageSet.images.geminiResult} alt="Gemini" style={styles.lightboxImage} />
+                  <div style={styles.lightboxLabel}>Gemini Result</div>
+                </div>
+              )}
+              {imageSet.images.humanEdited && (
+                <div style={styles.lightboxImageWrapper}>
+                  <img src={imageSet.images.humanEdited} alt="Human" style={styles.lightboxImage} />
+                  <div style={styles.lightboxLabel}>Human Edited</div>
                 </div>
               )}
             </div>
@@ -400,14 +428,14 @@ export function ImageComparisonRow({ imageSet, showClear }: Props) {
                 onMouseDown={handleSliderMouseDown}
                 onTouchStart={handleTouchStart}
               >
-                {/* Base image (right/second image) - fully visible */}
+                {/* Base image (right) - fully visible */}
                 <img
-                  src={lightbox.rightImage}
-                  alt={lightbox.rightLabel}
+                  src={rightImage.src}
+                  alt={rightImage.label}
                   style={styles.overlayImageBase}
                   draggable={false}
                 />
-                {/* Overlay image (left/first image) - clipped by slider */}
+                {/* Overlay image (left) - clipped by slider */}
                 <div
                   style={{
                     position: 'absolute',
@@ -419,12 +447,12 @@ export function ImageComparisonRow({ imageSet, showClear }: Props) {
                   }}
                 >
                   <img
-                    src={lightbox.leftImage}
-                    alt={lightbox.leftLabel}
+                    src={leftImage.src}
+                    alt={leftImage.label}
                     style={{
                       ...styles.overlayImageBase,
                       maxWidth: 'none',
-                      width: overlayRef.current ? `${overlayRef.current.offsetWidth}px` : '90vw'
+                      width: overlayRef.current ? `${overlayRef.current.offsetWidth}px` : '80vw'
                     }}
                     draggable={false}
                   />
@@ -442,9 +470,50 @@ export function ImageComparisonRow({ imageSet, showClear }: Props) {
                   </div>
                 </div>
               </div>
+
+              {/* Image selectors */}
+              <div style={styles.selectorContainer}>
+                <div style={styles.selectorGroup}>
+                  <div style={styles.selectorLabel}>Left Image</div>
+                  <div style={styles.selectorButtons}>
+                    {availableImages.map((img, idx) => (
+                      <button
+                        key={idx}
+                        style={{
+                          ...styles.selectorButton,
+                          background: leftImageIndex === idx ? '#4a9eff' : '#444',
+                          color: leftImageIndex === idx ? '#fff' : '#aaa'
+                        }}
+                        onClick={() => setLeftImageIndex(idx)}
+                      >
+                        {img.label.replace(' (Original)', '').replace(' (No Glasses)', '')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div style={styles.selectorGroup}>
+                  <div style={styles.selectorLabel}>Right Image</div>
+                  <div style={styles.selectorButtons}>
+                    {availableImages.map((img, idx) => (
+                      <button
+                        key={idx}
+                        style={{
+                          ...styles.selectorButton,
+                          background: rightImageIndex === idx ? '#4a9eff' : '#444',
+                          color: rightImageIndex === idx ? '#fff' : '#aaa'
+                        }}
+                        onClick={() => setRightImageIndex(idx)}
+                      >
+                        {img.label.replace(' (Original)', '').replace(' (No Glasses)', '')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
               <div style={styles.overlayLabels}>
-                <div style={styles.lightboxLabel}>{lightbox.leftLabel}</div>
-                <div style={styles.lightboxLabel}>{lightbox.rightLabel}</div>
+                <div style={styles.lightboxLabel}>{leftImage.label}</div>
+                <div style={styles.lightboxLabel}>{rightImage.label}</div>
               </div>
             </div>
           )}
