@@ -3,13 +3,12 @@
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist",
   "functions": {
-    "api/thumbnails/[...path].ts": {
+    "api/thumbnail.ts": {
       "maxDuration": 10
     }
   },
   "routes": [
-    { "src": "/api/images", "dest": "/api/images" },
-    { "src": "/api/thumbnails/(.*)", "dest": "/api/thumbnails/$1" },
+    { "src": "/api/(.*)", "dest": "/api/$1" },
     {
       "src": "/images/(.*)",
       "dest": "/images/$1",

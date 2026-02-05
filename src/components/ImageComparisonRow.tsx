@@ -18,7 +18,7 @@ type ViewMode = 'side-by-side' | 'overlay';
 // Convert full image URL to thumbnail URL
 function toThumbnail(url: string | null): string | null {
   if (!url) return null;
-  return url.replace('/images/', '/api/thumbnails/');
+  return `/api/thumbnail?src=${encodeURIComponent(url)}`;
 }
 
 const styles: Record<string, React.CSSProperties> = {
