@@ -7,8 +7,12 @@
       "maxDuration": 10
     }
   },
-  "rewrites": [
-    { "source": "/((?!api|images).*)", "destination": "/index.html" }
+  "routes": [
+    { "src": "/api/images", "dest": "/api/images" },
+    { "src": "/api/thumbnails/(.*)", "dest": "/api/thumbnails/$1" },
+    { "src": "/images/(.*)", "dest": "/images/$1" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ],
   "headers": [
     {
