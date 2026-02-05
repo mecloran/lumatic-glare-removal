@@ -1,0 +1,23 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run vercel-build",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/thumbnails/[...path].ts": {
+      "maxDuration": 10
+    }
+  },
+  "rewrites": [
+    { "source": "/api/images", "destination": "/api/images" },
+    { "source": "/api/thumbnails/:path*", "destination": "/api/thumbnails/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/images/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
+  ]
+}

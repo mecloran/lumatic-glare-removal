@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Build outputs
+dist/
+*.js.map
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Claude Code local data
+.claude/logs/
+.claude/pids/
+.claude/screenshots/
+
+# Vercel
+.vercel/
+
+# Large assets (keep only test_set in public/)
+raw_examples/
+.gemini-browser-data/
+
+# Debug screenshots
+*.png
+!public/**/*.png
+
+# Old backend/frontend directories (now merged)
+backend/
+frontend/
+
+# Logs
+*.log
