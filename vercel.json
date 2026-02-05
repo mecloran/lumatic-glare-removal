@@ -8,9 +8,7 @@
     }
   },
   "rewrites": [
-    { "source": "/api/images", "destination": "/api/images" },
-    { "source": "/api/thumbnails/:path*", "destination": "/api/thumbnails/:path*" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!api|images).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
