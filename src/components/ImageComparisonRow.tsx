@@ -37,13 +37,16 @@ const styles: Record<string, React.CSSProperties> = {
     gridTemplateColumns: 'repeat(4, 1fr)',
     gap: '12px'
   },
-  grid3: {
-    display: 'grid',
-    gridTemplateColumns: '2fr 1fr 1fr',
-    gap: '12px'
-  },
   imageSlot: {
     aspectRatio: '3/4',
+    background: '#0f0f23',
+    borderRadius: '6px',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  imageSlotWide: {
+    gridColumn: 'span 2',
     background: '#0f0f23',
     borderRadius: '6px',
     overflow: 'hidden',
@@ -324,20 +327,20 @@ export function ImageComparisonRow({ imageSet, showClear }: Props) {
 
   // Determine grid layout based on whether we have clear image
   const hasClearImage = showClear && imageSet.images.clear;
-  const gridStyle = hasClearImage ? styles.grid4 : styles.grid3;
 
-  // Build slots for grid display
+  // Build slots for grid display - always use 4-column grid
+  // For 3-image rows, the first image (glare) spans 2 columns
   const gridSlots = hasClearImage
     ? [
-        { label: 'Clear (No Glasses)', src: imageSet.images.clear },
-        { label: 'Glare (Original)', src: imageSet.images.glare },
-        { label: 'Gemini Result', src: imageSet.images.geminiResult },
-        { label: 'Human Edited', src: imageSet.images.humanEdited }
+        { label: 'Clear (No Glasses)', src: imageSet.images.clear, wide: false },
+        { label: 'Glare (Original)', src: imageSet.images.glare, wide: false },
+        { label: 'Gemini Result', src: imageSet.images.geminiResult, wide: false },
+        { label: 'Human Edited', src: imageSet.images.humanEdited, wide: false }
       ]
     : [
-        { label: 'Glare (Original)', src: imageSet.images.glare },
-        { label: 'Gemini Result', src: imageSet.images.geminiResult },
-        { label: 'Human Edited', src: imageSet.images.humanEdited }
+        { label: 'Glare (Original)', src: imageSet.images.glare, wide: true },
+        { label: 'Gemini Result', src: imageSet.images.geminiResult, wide: false },
+        { label: 'Human Edited', src: imageSet.images.humanEdited, wide: false }
       ];
 
   const leftImage = availableImages[leftImageIndex];
@@ -346,9 +349,9 @@ export function ImageComparisonRow({ imageSet, showClear }: Props) {
   return (
     <div style={styles.container}>
       <div style={styles.header}>{imageSet.name} ({imageSet.id})</div>
-      <div style={gridStyle}>
+      <div style={styles.grid4}>
         {gridSlots.map((slot, i) => (
-          <div key={i} style={styles.imageSlot}>
+          <div key={i} style={slot.wide ? styles.imageSlotWide : styles.imageSlot}>
             <div style={styles.label}>{slot.label}</div>
             <div style={styles.imageContainer}>
               {slot.src ? (
