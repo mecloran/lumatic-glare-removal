@@ -159,12 +159,23 @@ const styles: Record<string, React.CSSProperties> = {
     maxHeight: '60vh',
     overflow: 'hidden',
     borderRadius: '4px',
-    cursor: 'ew-resize'
+    cursor: 'ew-resize',
+    display: 'inline-block'
   },
   overlayImageBase: {
     display: 'block',
     maxWidth: '80vw',
     maxHeight: '60vh',
+    width: 'auto',
+    height: 'auto',
+    userSelect: 'none' as const
+  },
+  overlayImageTop: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
     objectFit: 'contain' as const,
     userSelect: 'none' as const
   },
@@ -431,35 +442,23 @@ export function ImageComparisonRow({ imageSet, showClear }: Props) {
                 onMouseDown={handleSliderMouseDown}
                 onTouchStart={handleTouchStart}
               >
-                {/* Base image (right) - fully visible */}
+                {/* Base image (right) - determines container size */}
                 <img
                   src={rightImage.src}
                   alt={rightImage.label}
                   style={styles.overlayImageBase}
                   draggable={false}
                 />
-                {/* Overlay image (left) - clipped by slider */}
-                <div
+                {/* Overlay image (left) - uses clip-path to reveal based on slider */}
+                <img
+                  src={leftImage.src}
+                  alt={leftImage.label}
                   style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: `${sliderPosition}%`,
-                    height: '100%',
-                    overflow: 'hidden'
+                    ...styles.overlayImageTop,
+                    clipPath: `inset(0 ${100 - sliderPosition}% 0 0)`
                   }}
-                >
-                  <img
-                    src={leftImage.src}
-                    alt={leftImage.label}
-                    style={{
-                      ...styles.overlayImageBase,
-                      maxWidth: 'none',
-                      width: overlayRef.current ? `${overlayRef.current.offsetWidth}px` : '80vw'
-                    }}
-                    draggable={false}
-                  />
-                </div>
+                  draggable={false}
+                />
                 {/* Slider line and handle */}
                 <div
                   style={{
