@@ -45,3 +45,7 @@ frontend/
 # Logs
 *.log
 .vercel
+
+# Watermark removal tool binaries
+tools/watermark-remover/GeminiWatermarkTool
+tools/watermark-remover/*.zip
