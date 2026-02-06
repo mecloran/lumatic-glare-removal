@@ -354,8 +354,11 @@ export function ImageComparisonRow({ imageSet, showClear }: Props) {
         { label: 'Human Edited', src: imageSet.images.humanEdited, wide: false }
       ];
 
-  const leftImage = availableImages[leftImageIndex];
-  const rightImage = availableImages[rightImageIndex];
+  // Ensure valid indices for overlay comparison
+  const safeLeftIndex = Math.min(leftImageIndex, availableImages.length - 1);
+  const safeRightIndex = Math.min(rightImageIndex, availableImages.length - 1);
+  const leftImage = availableImages[safeLeftIndex];
+  const rightImage = availableImages[safeRightIndex];
 
   return (
     <div style={styles.container}>
@@ -434,7 +437,7 @@ export function ImageComparisonRow({ imageSet, showClear }: Props) {
                 </div>
               )}
             </div>
-          ) : (
+          ) : leftImage && rightImage ? (
             <div onClick={(e) => e.stopPropagation()}>
               <div
                 ref={overlayRef}
@@ -518,7 +521,7 @@ export function ImageComparisonRow({ imageSet, showClear }: Props) {
                 <div style={styles.lightboxLabel}>{rightImage.label}</div>
               </div>
             </div>
-          )}
+          ) : null}
 
           <div style={styles.closeHint}>Click outside to close</div>
         </div>
