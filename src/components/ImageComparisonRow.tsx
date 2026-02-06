@@ -179,6 +179,36 @@ const styles: Record<string, React.CSSProperties> = {
     objectFit: 'contain' as const,
     userSelect: 'none' as const
   },
+  overlayLabelLeft: {
+    position: 'absolute' as const,
+    top: '12px',
+    left: '12px',
+    background: 'rgba(0, 0, 0, 0.7)',
+    color: '#fff',
+    padding: '6px 12px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: 600,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.5px',
+    pointerEvents: 'none' as const,
+    zIndex: 5
+  },
+  overlayLabelRight: {
+    position: 'absolute' as const,
+    top: '12px',
+    right: '12px',
+    background: 'rgba(0, 0, 0, 0.7)',
+    color: '#fff',
+    padding: '6px 12px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: 600,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.5px',
+    pointerEvents: 'none' as const,
+    zIndex: 5
+  },
   sliderLine: {
     position: 'absolute' as const,
     top: 0,
@@ -473,6 +503,13 @@ export function ImageComparisonRow({ imageSet, showClear }: Props) {
                   <div style={styles.sliderHandle}>
                     <span style={styles.sliderArrows}>◀ ▶</span>
                   </div>
+                </div>
+                {/* Floating image labels */}
+                <div style={styles.overlayLabelLeft}>
+                  {leftImage.label.replace(' (Original)', '').replace(' (No Glasses)', '')}
+                </div>
+                <div style={styles.overlayLabelRight}>
+                  {rightImage.label.replace(' (Original)', '').replace(' (No Glasses)', '')}
                 </div>
               </div>
 
